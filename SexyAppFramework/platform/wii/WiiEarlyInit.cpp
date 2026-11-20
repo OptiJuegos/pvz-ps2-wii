@@ -432,6 +432,8 @@ void wiiTerminateHandler()
 	// abort rather than re-enter and recurse forever.
 	std::set_terminate(std::abort);
 	wiiLog("[WII][FATAL] %s\n", message.c_str());
+	for (int i = 0; i < 60 * 8; ++i)
+		VIDEO_WaitVSync();
 	std::abort();
 }
 

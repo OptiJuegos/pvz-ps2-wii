@@ -225,31 +225,38 @@ std::wstring Sexy::StringToWString(const std::string &theString)
 {
 	std::wstring aString;
 	aString.reserve(theString.length());
-	for(size_t i = 0; i < theString.length(); ++i)
-		aString += (unsigned char)theString[i];
+	for (size_t i = 0; i < theString.length(); ++i)
+	{
+		unsigned char c = (unsigned char)theString[i];
+		if ((c == 0xC2 || c == 0xC3) && i + 1 < theString.length())
+		{
+			unsigned char c2 = (unsigned char)theString[i + 1];
+			if ((c2 & 0xC0) == 0x80)
+			{
+				wchar_t wc = (wchar_t)(((c & 0x1F) << 6) | (c2 & 0x3F));
+				aString += wc;
+				++i;
+				continue;
+			}
+		}
+		aString += (wchar_t)c;
+	}
 	return aString;
 }
 
 std::string Sexy::WStringToString(const std::wstring &theString)
 {
-	size_t aRequiredLength = wcstombs( NULL, theString.c_str(), 0 );
-	if (aRequiredLength < 16384)
+	std::string aString;
+	aString.reserve(theString.length());
+	for (size_t i = 0; i < theString.length(); ++i)
 	{
-		char aBuffer[16384];
-		wcstombs( aBuffer, theString.c_str(), 16384 );
-		return std::string(aBuffer);
+		wchar_t wc = theString[i];
+		if (wc >= 0 && wc <= 0xFF)
+			aString += (char)(unsigned char)wc;
+		else
+			aString += '?';
 	}
-	else
-	{
-		DBG_ASSERTE(aRequiredLength != (size_t)-1);
-		if (aRequiredLength == (size_t)-1) return "";
-
-		char* aBuffer = new char[aRequiredLength+1];
-		wcstombs( aBuffer, theString.c_str(), aRequiredLength+1 );
-		std::string aStr = aBuffer;
-		delete[] aBuffer;
-		return aStr;
-	}
+	return aString;
 }
 
 SexyString Sexy::StringToSexyString(const std::string& theString)

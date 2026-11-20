@@ -24,9 +24,23 @@ extern "C" {
 unsigned int __stacksize__ = 1024 * 1024;
 }
 
+static void PvZWiiWaitBeforeExit()
+{
+	wiiLog("\nPress HOME (Wiimote) or START (GC) to exit...\n");
+	for (int i = 0; i < 60 * 10; ++i)
+	{
+		WPAD_ScanPads();
+		PAD_ScanPads();
+		if ((WPAD_ButtonsDown(0) & WPAD_BUTTON_HOME) || (PAD_ButtonsDown(0) & PAD_BUTTON_START))
+			break;
+		VIDEO_WaitVSync();
+	}
+}
+
 static void PvZWiiTerminate()
 {
 	wiiLog("[WII][FATAL] std::terminate\n");
+	PvZWiiWaitBeforeExit();
 	std::abort();
 }
 
@@ -47,6 +61,7 @@ int main(int argc, char** argv)
 	if (!wiiEnsureStorage())
 	{
 		wiiLog("[WII][FATAL] SD/USB storage is unavailable\n");
+		PvZWiiWaitBeforeExit();
 		return 1;
 	}
 
@@ -57,6 +72,7 @@ int main(int argc, char** argv)
 	if (chdir(appDir) != 0)
 	{
 		wiiLog("[WII][FATAL] cannot chdir to app directory: %s\n", appDir);
+		PvZWiiWaitBeforeExit();
 		return 1;
 	}
 	wiiLog("[WII] cwd set to %s\n", appDir);
@@ -83,16 +99,19 @@ int main(int argc, char** argv)
 	{
 		wiiHeapCaptureBadAlloc();
 		wiiLog("[WII][FATAL] std::bad_alloc\n");
+		PvZWiiWaitBeforeExit();
 		return 1;
 	}
 	catch (const std::exception& e)
 	{
 		wiiLog("[WII][FATAL] %s\n", e.what());
+		PvZWiiWaitBeforeExit();
 		return 1;
 	}
 	catch (...)
 	{
 		wiiLog("[WII][FATAL] unknown exception\n");
+		PvZWiiWaitBeforeExit();
 		return 1;
 	}
 
