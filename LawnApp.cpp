@@ -860,8 +860,8 @@ void LawnApp::DoConfirmBackToMain()
 	LawnDialog* aDialog = (LawnDialog*)DoDialog(
 		Dialogs::DIALOG_CONFIRM_BACK_TO_MAIN, 
 		true, 
-		__S("Leave Game?"/*"[LEAVE_GAME]"*/),
-		__S("Do you want to return\nto the main menu?\n\nYour game will be saved."/*"[LEAVE_GAME_HEADER]"*/), 
+		__S("[LEAVE_GAME_HEADER]"),
+		__S("[LEAVE_GAME]"), 
 		"", 
 		Dialog::BUTTONS_YES_NO
 	);
@@ -939,9 +939,9 @@ void LawnApp::DoPauseDialog()
 	LawnDialog* aDialog = (LawnDialog*)DoDialog(
 		Dialogs::DIALOG_PAUSED,
 		true,
-		__S("GAME PAUSED"/*"[RESUME_GAME]"*/),
-		__S("Click to resume game"), 
-		__S("Resume Game"/*"[GAME_PAUSED]"*/), 
+		__S("[GAME_PAUSED]"),
+		__S("[CLICK_TO_RESUME]"), 
+		__S("[RESUME_GAME]"), 
 		Dialog::BUTTONS_FOOTER
 	);
 

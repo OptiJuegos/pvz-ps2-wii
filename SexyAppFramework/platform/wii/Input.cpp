@@ -18,6 +18,8 @@ namespace
 {
 float sCursorX = 320.0f;
 float sCursorY = 240.0f;
+float sKeyboardAnchorX = 320.0f;
+float sKeyboardAnchorY = 240.0f;
 float sCursorRotation = 0.0f;
 u32 sPrevWpad = 0;
 u32 sPrevPad = 0;
@@ -117,10 +119,12 @@ bool SexyAppBase::ProcessDeferredMessages(bool)
 	{
 		// Wii Remote pointing at the sensor bar: absolute positioning, already
 		// in the 640x480 space InitInput asked WPAD for.
-		if (std::fabs(wd->ir.x - sCursorX) >= kIrFocusReleaseDistance ||
-			std::fabs(wd->ir.y - sCursorY) >= kIrFocusReleaseDistance)
+		if (std::fabs(wd->ir.x - sKeyboardAnchorX) >= kIrFocusReleaseDistance ||
+			std::fabs(wd->ir.y - sKeyboardAnchorY) >= kIrFocusReleaseDistance)
 		{
 			ClearKeyboardSeedSelection();
+			sKeyboardAnchorX = wd->ir.x;
+			sKeyboardAnchorY = wd->ir.y;
 		}
 		sCursorX = wd->ir.x;
 		sCursorY = wd->ir.y;
@@ -149,7 +153,12 @@ bool SexyAppBase::ProcessDeferredMessages(bool)
 	SendPointer(this);
 
 	u32 wpad = WPAD_ButtonsHeld(WPAD_CHAN_0);
-	u32 pad = PAD_ButtonsHeld(0);
+	// When the Wii Remote IR pointer is active (or any Wiimote button is pressed),
+	// ignore GameCube port 1 buttons so Dolphin's default keyboard mapping
+	// (where Wiimote A=Z, B=X and GCPad A=X, B=Z are inverted on the same keys)
+	// does not fire a simultaneous right-click cancel (PAD_BUTTON_B) when pressing A.
+	const bool aWiimoteActive = (wd != NULL && wd->ir.valid) || wpad != 0 || sPrevWpad != 0;
+	u32 pad = aWiimoteActive ? 0 : PAD_ButtonsHeld(0);
 	u32 wDown = wpad & ~sPrevWpad;
 	u32 wUp = sPrevWpad & ~wpad;
 	u32 pDown = pad & ~sPrevPad;
@@ -215,7 +224,11 @@ bool SexyAppBase::ProcessDeferredMessages(bool)
 		const bool aDirectionWasHeld = (sPrevWpad & aDirection.wpadButton) != 0 ||
 			(sPrevPad & aDirection.padButton) != 0;
 		if (aDirectionIsHeld && !aDirectionWasHeld)
+		{
+			sKeyboardAnchorX = sCursorX;
+			sKeyboardAnchorY = sCursorY;
 			SendKey(this, aDirection.key, true);
+		}
 		if (!aDirectionIsHeld && aDirectionWasHeld)
 			SendKey(this, aDirection.key, false);
 	}
